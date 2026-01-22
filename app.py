@@ -5,6 +5,7 @@ import joblib
 # Load saved EBM model
 pipeline = joblib.load("model/ebm_pipeline.joblib")
 ebm = pipeline.named_steps["ebm"]
+lr_pipeline = joblib.load("model/logistic_pipeline.joblib")
 
 st.set_page_config(page_title="Credit Risk Predictor", layout="centered")
 st.title("Credit Default Risk Predictor (Explainable AI)")
@@ -108,3 +109,20 @@ if st.button("Predict"):
     except Exception as e:
         st.write("⚠️ Could not generate explanation.")
         st.write(e)
+# ------------------- MODEL COMPARISON -------------------
+    st.subheader("📊 Model Comparison")
+
+    lr_proba = float(lr_pipeline.predict_proba(df)[0][1])
+    ebm_proba = float(proba)
+
+    comparison_df = pd.DataFrame({
+        "Model": ["Logistic Regression", "Explainable Boosting Machine (EBM)"],
+        "Default Probability": [round(lr_proba, 3), round(ebm_proba, 3)]
+    })
+
+    st.table(comparison_df)
+
+    if ebm_proba < lr_proba:
+        st.success("✅ EBM predicts lower risk and is more reliable due to non-linear learning.")
+    else:
+        st.info("ℹ️ Logistic Regression predicts lower risk but lacks feature interaction modeling.")

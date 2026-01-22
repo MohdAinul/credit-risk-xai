@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 *.pyo
 .ipynb_checkpoints/
+git add .
+git commit -m "Initial clean project commit"

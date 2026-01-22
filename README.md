@@ -25,6 +25,8 @@ EBM achieves higher accuracy due to its ability to model non-linear feature inte
 
 The Streamlit UI displays default probability predictions from both models for transparent comparison.
 
+---
+
 ## 📁 Project Structure
 
 credit-risk-xai/

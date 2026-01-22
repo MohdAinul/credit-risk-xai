@@ -13,6 +13,17 @@ The model provides transparent, interpretable reasons behind each prediction.
 - Complete ML training pipeline
 
 ---
+## 📊 Model Comparison (Improvement)
+
+This project compares two machine learning models:
+
+- **Logistic Regression** (Baseline Model)
+- **Explainable Boosting Machine (EBM)**
+
+Both models are evaluated on the same input data.  
+EBM achieves higher accuracy due to its ability to model non-linear feature interactions while remaining fully explainable.
+
+The Streamlit UI displays default probability predictions from both models for transparent comparison.
 
 ## 📁 Project Structure
 

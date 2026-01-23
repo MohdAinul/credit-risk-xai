@@ -18,6 +18,21 @@ lr_pipeline, rf_pipeline, xgb_pipeline = load_models()
 st.set_page_config(page_title="Credit Risk Predictor", layout="centered")
 st.title("Credit Default Risk Predictor")
 
+# Hiding the Deploy button
+st.markdown(
+    """
+    <style>
+    .stDeployButton {
+            display: none;
+        }
+    [data-testid="stDeployButton"] {
+            display: none;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.write("Fill borrower details below and click Predict.")
 
 # ------------------- STREAMLIT INPUTS -------------------
@@ -74,6 +89,19 @@ if st.button("Predict"):
     # ------------------- TOP 3 REASONS -------------------
     st.subheader("Top 3 Reasons (XGBoost)")
 
+    feature_names = {
+        "LIMIT_BAL": "Credit Limit",
+        "AGE": "Age",
+        "PAY_0": "Last month payment status",
+        "PAY_2": "2 months ago payment status",
+        "PAY_3": "3 months ago payment status",
+        "BILL_AMT1": "Last bill amount",
+        "BILL_AMT2": "Previous bill amount",
+        "PAY_AMT1": "Amount paid last month",
+        "NUM_OF_CARDS": "Number of cards",
+        "ANNUAL_INCOME": "Annual Income"
+    }
+
     try:
         # Extract model and preprocessor
         model = xgb_pipeline.named_steps["model"]
@@ -103,12 +131,18 @@ if st.button("Predict"):
         for _, row in top3.iterrows():
             feature = row['feature']
             shap_val = row['shap_value']
+
+            # Get the value
+            feature_value = df[feature].iloc[0]
+            # Get friendly name
+            friendly_name = feature_names.get(feature, feature)
+
             # SHAP value > 0 pushes prediction towards 1 (Default)
             # SHAP value < 0 pushes prediction towards 0 (No Default)
             if shap_val > 0:
-                st.write(f"- {feature}: Increases risk of default")
+                st.write(f"The value **{feature_value}** for **{friendly_name}** increases the risk of default.")
             else:
-                st.write(f"- {feature}: Decreases risk of default")
+                st.write(f"The value **{feature_value}** for **{friendly_name}** decreases the risk of default.")
 
     except Exception as e:
         st.write("Could not generate explanation.")

@@ -36,16 +36,16 @@ st.markdown(
 st.write("Fill borrower details below and click Predict.")
 
 # ------------------- STREAMLIT INPUTS -------------------
-LIMIT_BAL = st.number_input("Credit Limit", value=30000, step=1000)
-AGE = st.number_input("Age", value=30, step=1)
+LIMIT_BAL = st.number_input("Credit Limit", value=0, step=1000)
+AGE = st.number_input("Age", value=0, step=1)
 PAY_0 = st.number_input("Last month payment status", value=0, step=1)
 PAY_2 = st.number_input("2 months ago payment status", value=0, step=1)
 PAY_3 = st.number_input("3 months ago payment status", value=0, step=1)
-BILL_AMT1 = st.number_input("Last bill amount", value=5000, step=100)
-BILL_AMT2 = st.number_input("Previous bill amount", value=4000, step=100)
-PAY_AMT1 = st.number_input("Amount paid last month", value=2000, step=100)
-NUM_OF_CARDS = st.number_input("Number of cards", value=2, step=1)
-ANNUAL_INCOME = st.number_input("Annual Income", value=60000, step=1000)
+BILL_AMT1 = st.number_input("Last bill amount", value=0, step=100)
+BILL_AMT2 = st.number_input("Previous bill amount", value=0, step=100)
+PAY_AMT1 = st.number_input("Amount paid last month", value=0, step=100)
+NUM_OF_CARDS = st.number_input("Number of cards", value=0, step=1)
+ANNUAL_INCOME = st.number_input("Annual Income", value=0, step=1000)
 
 # Convert all inputs to float
 input_data = [

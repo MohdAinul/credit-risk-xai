@@ -140,9 +140,9 @@ if st.button("Predict"):
             # SHAP value > 0 pushes prediction towards 1 (Default)
             # SHAP value < 0 pushes prediction towards 0 (No Default)
             if shap_val > 0:
-                st.write(f"The value **{feature_value}** for **{friendly_name}** increases the risk of default.")
+                st.write(f"The value of **{friendly_name}** increases the risk of default.")
             else:
-                st.write(f"The value **{feature_value}** for **{friendly_name}** decreases the risk of default.")
+                st.write(f"The value of **{friendly_name}** decreases the risk of default.")
 
     except Exception as e:
         st.write("Could not generate explanation.")

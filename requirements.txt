@@ -1,6 +1,7 @@
 pandas
 numpy
 scikit-learn
-interpretml
 joblib
 streamlit
+xgboost
+shap

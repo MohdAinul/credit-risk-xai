@@ -1,86 +1,142 @@
-# Credit Risk Prediction using Explainable AI (EBM)
+# Credit Risk Predictor
 
-This project predicts whether a borrower will default on a credit loan using an Explainable Boosting Machine (EBM).  
-The model provides transparent, interpretable reasons behind each prediction.
+This project predicts whether a borrower will default on a credit loan using three machine learning models: **Logistic Regression**, **Random Forest**, and **XGBoost**.
+
+The application uses **SHAP (SHapley Additive exPlanations)** to provide transparent, interpretable reasons behind each prediction (specifically for the XGBoost model).
 
 ---
 
 ## 🚀 Features
-- Explainable AI model (EBM)
-- Top 3 reasons for every prediction
-- Clean Streamlit UI
-- Synthetic dataset generation
-- Complete ML training pipeline
+- **3-Model Prediction:** Compares results from Logistic Regression, Random Forest, and XGBoost.
+- **Top 3 Reasons:** Explains the prediction using SHAP values (XGBoost).
+- **Clean Streamlit UI:** Easy-to-use interface for entering borrower details.
+- **Synthetic Dataset Generation:** Includes a script to generate training data.
+- **Complete ML Pipeline:** Scripts to train and save models.
 
 ---
-## 📊 Model Comparison (Improvement)
 
-This project compares two machine learning models:
+## 📊 Model Comparison
 
-- **Logistic Regression** (Baseline Model)
-- **Explainable Boosting Machine (EBM)**
+The project trains and compares three models:
 
-Both models are evaluated on the same input data.  
-EBM achieves higher accuracy due to its ability to model non-linear feature interactions while remaining fully explainable.
+1.  **Logistic Regression** (Baseline)
+2.  **Random Forest**
+3.  **XGBoost** (Primary Model)
 
-The Streamlit UI displays default probability predictions from both models for transparent comparison.
+The Streamlit UI displays the default probability from all three models, but uses XGBoost for the primary decision and explanation.
 
 ---
 
 ## 📁 Project Structure
 
+```
 credit-risk-xai/
-│── app.py # Streamlit app
-│── train_ebm.py # Train EBM model
-│── create_synthetic.py # Generate dataset
-│── model/ebm_pipeline.joblib
-│── data/credit.csv
-│── requirements.txt
-│── README.md
+│── app.py                # Streamlit app
+│── train_models.py       # Train LR, RF, and XGBoost models
+│── create_synthetic.py   # Generate synthetic dataset
+│── model/                # Saved model pipelines (.joblib)
+│── data/                 # Dataset directory
+│── requirements.txt      # Python dependencies
+│── README.md             # Project documentation
+```
 
 ---
 
-## 🔧 Installation
+## 🔧 Setup & Installation
 
-git clone git@github.com:MohdAinul/credit-risk-xai.git
-cd credit-risk-xai
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+Follow the instructions below for your operating system.
 
-yaml
-Copy code
+### 1. Windows (using WSL Terminal)
 
----
+Prerequisites: Ensure you have WSL (Windows Subsystem for Linux) installed with a Linux distribution (e.g., Ubuntu).
 
-## ▶️ Run App
+1.  **Open your WSL terminal.**
 
-streamlit run app.py
+2.  **Clone the repository:**
+    ```bash
+    git clone git@github.com:MohdAinul/credit-risk-xai.git
+    cd credit-risk-xai
+    ```
 
-yaml
-Copy code
+3.  **Create and activate a virtual environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+4.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+5.  **Generate the dataset:**
+    ```bash
+    python create_synthetic.py
+    ```
+
+6.  **Train the models:**
+    ```bash
+    python train_models.py
+    ```
+
+7.  **Run the Streamlit app:**
+    ```bash
+    streamlit run app.py
+    ```
+
+### 2. Mac
+
+1.  **Open your Terminal.**
+
+2.  **Clone the repository:**
+    ```bash
+    git clone git@github.com:MohdAinul/credit-risk-xai.git
+    cd credit-risk-xai
+    ```
+
+3.  **Create and activate a virtual environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+4.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+5.  **Generate the dataset:**
+    ```bash
+    python create_synthetic.py
+    ```
+
+6.  **Train the models:**
+    ```bash
+    python train_models.py
+    ```
+
+7.  **Run the Streamlit app:**
+    ```bash
+    streamlit run app.py
+    ```
 
 ---
 
 ## 📌 Example Output
 
-- Default Probability: 0.42  
-- Result: ❌ Likely to Default  
-- Top Reasons: PAY_0, BILL_AMT1, LIMIT_BAL  
+- **Default Probability:** 42.5%
+- **Result:** Borrower is unlikely to default.
+- **Top Reasons:** PAY_0, BILL_AMT1, LIMIT_BAL
 
 ---
 
 ## 🧠 Tech Used
-- Python  
-- InterpretML  
-- Streamlit  
-- Scikit-learn  
-- Joblib  
-
----
-
-## 📜 Report
-The complete project report is included in the repository.
+- Python
+- Streamlit
+- Scikit-learn
+- XGBoost
+- SHAP
+- Joblib
 
 ---
 

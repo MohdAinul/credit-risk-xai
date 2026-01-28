@@ -1,28 +1,51 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import shap
+import xgboost
 
-# Load saved EBM model
-pipeline = joblib.load("model/ebm_pipeline.joblib")
-ebm = pipeline.named_steps["ebm"]
-lr_pipeline = joblib.load("model/logistic_pipeline.joblib")
+# Load saved models
+# Using caching to avoid reloading on every interaction
+@st.cache_resource
+def load_models():
+    lr_pipeline = joblib.load("model/lr_pipeline.joblib")
+    rf_pipeline = joblib.load("model/rf_pipeline.joblib")
+    xgb_pipeline = joblib.load("model/xgb_pipeline.joblib")
+    return lr_pipeline, rf_pipeline, xgb_pipeline
+
+lr_pipeline, rf_pipeline, xgb_pipeline = load_models()
 
 st.set_page_config(page_title="Credit Risk Predictor", layout="centered")
-st.title("Credit Default Risk Predictor (Explainable AI)")
+st.title("Credit Default Risk Predictor")
+
+# Hiding the Deploy button
+st.markdown(
+    """
+    <style>
+    .stDeployButton {
+            display: none;
+        }
+    [data-testid="stDeployButton"] {
+            display: none;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.write("Fill borrower details below and click Predict.")
 
 # ------------------- STREAMLIT INPUTS -------------------
-LIMIT_BAL = st.number_input("Credit Limit", value=30000, step=1000)
-AGE = st.number_input("Age", value=30, step=1)
+LIMIT_BAL = st.number_input("Credit Limit", value=0, step=1000)
+AGE = st.number_input("Age", value=0, step=1)
 PAY_0 = st.number_input("Last month payment status", value=0, step=1)
 PAY_2 = st.number_input("2 months ago payment status", value=0, step=1)
 PAY_3 = st.number_input("3 months ago payment status", value=0, step=1)
-BILL_AMT1 = st.number_input("Last bill amount", value=5000, step=100)
-BILL_AMT2 = st.number_input("Previous bill amount", value=4000, step=100)
-PAY_AMT1 = st.number_input("Amount paid last month", value=2000, step=100)
-NUM_OF_CARDS = st.number_input("Number of cards", value=2, step=1)
-ANNUAL_INCOME = st.number_input("Annual Income", value=60000, step=1000)
+BILL_AMT1 = st.number_input("Last bill amount", value=0, step=100)
+BILL_AMT2 = st.number_input("Previous bill amount", value=0, step=100)
+PAY_AMT1 = st.number_input("Amount paid last month", value=0, step=100)
+NUM_OF_CARDS = st.number_input("Number of cards", value=0, step=1)
+ANNUAL_INCOME = st.number_input("Annual Income", value=0, step=1000)
 
 # Convert all inputs to float
 input_data = [
@@ -37,92 +60,109 @@ columns = [
     "NUM_OF_CARDS", "ANNUAL_INCOME"
 ]
 
-# ------------------- FEATURE NAME MAPPING -------------------
-name_map = {
-    "feature_0000": "LIMIT_BAL",
-    "feature_0001": "AGE",
-    "feature_0002": "PAY_0",
-    "feature_0003": "PAY_2",
-    "feature_0004": "PAY_3",
-    "feature_0005": "BILL_AMT1",
-    "feature_0006": "BILL_AMT2",
-    "feature_0007": "PAY_AMT1",
-    "feature_0008": "NUM_OF_CARDS",
-    "feature_0009": "ANNUAL_INCOME"
-}
-
 # ------------------- ON CLICK PREDICT -------------------
 if st.button("Predict"):
 
     df = pd.DataFrame([input_data], columns=columns)
 
-    # Prediction
-    proba = float(pipeline.predict_proba(df)[0][1])
-    pred = int(pipeline.predict(df)[0])
+    # Predictions
+    lr_proba = lr_pipeline.predict_proba(df)[0][1]
+    rf_proba = rf_pipeline.predict_proba(df)[0][1]
+    xgb_proba = xgb_pipeline.predict_proba(df)[0][1]
 
-    st.subheader("📌 Prediction Result")
-    st.write("Default Risk Probability:", round(proba, 3))
+    lr_pred = int(lr_pipeline.predict(df)[0])
+    rf_pred = int(rf_pipeline.predict(df)[0])
+    xgb_pred = int(xgb_pipeline.predict(df)[0])
 
-    if pred == 1:
-        st.error("⚠️ Borrower is likely to DEFAULT!")
+    # Using XGBoost as the primary model for display
+    primary_proba = xgb_proba
+    primary_pred = xgb_pred
+
+    st.subheader("Prediction Result")
+    st.write(f"Default Risk Probability: {primary_proba * 100:.2f}%")
+
+    if primary_pred == 1:
+        st.write("Result: Borrower is likely to DEFAULT.")
     else:
-        st.success("✅ Borrower is unlikely to default.")
+        st.write("Result: Borrower is unlikely to default.")
 
-    # ------------------- TOP 3 REASONS (SAFE VERSION) -------------------
-    st.subheader("📌 Top 3 Reasons")
+    # ------------------- TOP 3 REASONS -------------------
+    st.subheader("Top 3 Reasons (XGBoost)")
+
+    feature_names = {
+        "LIMIT_BAL": "Credit Limit",
+        "AGE": "Age",
+        "PAY_0": "Last month payment status",
+        "PAY_2": "2 months ago payment status",
+        "PAY_3": "3 months ago payment status",
+        "BILL_AMT1": "Last bill amount",
+        "BILL_AMT2": "Previous bill amount",
+        "PAY_AMT1": "Amount paid last month",
+        "NUM_OF_CARDS": "Number of cards",
+        "ANNUAL_INCOME": "Annual Income"
+    }
 
     try:
-        global_exp = ebm.explain_global()
-        data = global_exp.data()
+        # Extract model and preprocessor
+        model = xgb_pipeline.named_steps["model"]
+        preprocessor = xgb_pipeline.named_steps["pre"]
 
-        feature_names = data["names"]
-        feature_scores = data["scores"]
+        # Transform input
+        X_transformed = preprocessor.transform(df)
 
-        reasons = []
+        # SHAP Explanation
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(X_transformed)
 
-        for name, score_list in zip(feature_names, feature_scores):
+        # Handle SHAP output format
+        if isinstance(shap_values, list):
+            vals = shap_values[1][0]
+        else:
+            vals = shap_values[0]
 
-            # Handle combined features like "feature_0005 & feature_0009"
-            if "&" in name:
-                parts = [p.strip() for p in name.split("&")]
-                mapped_parts = [name_map.get(p, p) for p in parts]
-                readable_name = " & ".join(mapped_parts)
+        feature_importance = pd.DataFrame({
+            'feature': columns,
+            'shap_value': vals
+        })
+
+        feature_importance['abs_value'] = feature_importance['shap_value'].abs()
+        top3 = feature_importance.sort_values(by='abs_value', ascending=False).head(3)
+
+        for _, row in top3.iterrows():
+            feature = row['feature']
+            shap_val = row['shap_value']
+
+            # Get the value
+            feature_value = df[feature].iloc[0]
+            # Get friendly name
+            friendly_name = feature_names.get(feature, feature)
+
+            # SHAP value > 0 pushes prediction towards 1 (Default)
+            # SHAP value < 0 pushes prediction towards 0 (No Default)
+            if shap_val > 0:
+                st.write(f"The value of **{friendly_name}** increases the risk of default.")
             else:
-                readable_name = name_map.get(name, name)
-
-            # strongest effect
-            if isinstance(score_list, list) or isinstance(score_list, tuple):
-                strongest = max(score_list, key=abs)
-            else:
-                strongest = float(score_list)
-
-            reasons.append((readable_name, strongest))
-
-        top3 = sorted(reasons, key=lambda x: -abs(x[1]))[:3]
-
-        for feature, score in top3:
-            if score > 0:
-                st.write(f"🔴 {feature}: increases default risk ({round(score,3)})")
-            else:
-                st.write(f"🟢 {feature}: decreases default risk ({round(score,3)})")
+                st.write(f"The value of **{friendly_name}** decreases the risk of default.")
 
     except Exception as e:
-        st.write("⚠️ Could not generate explanation.")
-        st.write(e)
-# ------------------- MODEL COMPARISON -------------------
-    st.subheader("📊 Model Comparison")
+        st.write("Could not generate explanation.")
+        st.write(str(e))
 
-    lr_proba = float(lr_pipeline.predict_proba(df)[0][1])
-    ebm_proba = float(proba)
+    # ------------------- MODEL COMPARISON -------------------
+    st.subheader("Model Comparison")
 
     comparison_df = pd.DataFrame({
-        "Model": ["Logistic Regression", "Explainable Boosting Machine (EBM)"],
-        "Default Probability": [round(lr_proba, 3), round(ebm_proba, 3)]
+        "Model": ["Logistic Regression", "Random Forest", "XGBoost"],
+        "Prediction": [
+            "Default" if lr_pred == 1 else "No Default",
+            "Default" if rf_pred == 1 else "No Default",
+            "Default" if xgb_pred == 1 else "No Default"
+        ],
+        "Probability (%)": [
+            round(lr_proba * 100, 2),
+            round(rf_proba * 100, 2),
+            round(xgb_proba * 100, 2)
+        ]
     })
 
     st.table(comparison_df)
-
-    if ebm_proba < lr_proba:
-        st.success("✅ EBM predicts lower risk and is more reliable due to non-linear learning.")
-    else:
-        st.info("ℹ️ Logistic Regression predicts lower risk but lacks feature interaction modeling.")

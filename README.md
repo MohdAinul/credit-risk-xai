@@ -26,6 +26,17 @@ The project trains and compares three models:
 The Streamlit UI displays the default probability from all three models, but uses XGBoost for the primary decision and explanation.
 
 ---
+## 📊 Model Comparison (Improvement)
+
+This project compares two machine learning models:
+
+- **Logistic Regression** (Baseline Model)
+- **Explainable Boosting Machine (EBM)**
+
+Both models are evaluated on the same input data.  
+EBM achieves higher accuracy due to its ability to model non-linear feature interactions while remaining fully explainable.
+
+The Streamlit UI displays default probability predictions from both models for transparent comparison.
 
 ## 📁 Project Structure
 
